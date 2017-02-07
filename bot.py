@@ -42,20 +42,27 @@ def main():
 	    ),
 	]:
 	    ax.add_patch(p)
-	fig.savefig('rect5.png', dpi=90)  #bbox_inches='tight', pad_inches=0
+	fig.savefig('palette.png', dpi=90)  #bbox_inches='tight', pad_inches=0
 
 	auth = tweepy.OAuthHandler(secrets.C_KEY, secrets.C_SECRET)  
 	auth.set_access_token(secrets.A_TOKEN, secrets.A_TOKEN_SECRET)  
 	api = tweepy.API(auth)
 
 	#Print and Send Tweet
-	print_tweet(randColorArray)
-	#api.update_status(randColor.generate())
+	status = convertColorsToStatus(randColorArray)
+	print_tweet(status)
+	api.update_with_media("./palette.png",status)
 
 ################################################################################################
 #send the tweet
 def print_tweet(tweet): 
 	print tweet
+
+def removeHash(colorString):
+	return colorString.replace('#','')
+
+def convertColorsToStatus(colorArray):
+	return removeHash(colorArray[0]).upper() + '\n' + removeHash(colorArray[1]).upper() + '\n' + removeHash(colorArray[2]).upper() + '\n' + removeHash(colorArray[3]).upper() + '\n' + removeHash(colorArray[4]).upper()
 
 ######################################################
 if __name__ == "__main__":
