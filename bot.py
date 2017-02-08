@@ -14,33 +14,34 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 def main():	
-	#Create Random Color Array
-	randColor = randomcolor.RandomColor()
-	randColorArray = randColor.generate(hue="random", count=1)
-
-	#newrandColorArray = getAnalogousHarmony(randColorArray[0],0.2)
-	#newrandColorArray = getMonochromaticHarmony(randColorArray[0],0.4, 0.6)
-	#newrandColorArray = getModTriadicHarmony(randColorArray[0],0.8)
-	#newrandColorArray = goldenRatio(randColorArray[0])
-	#newrandColorArray = getPentadicHarmony(randColorArray[0], 0.1)
-	newrandColorArray = getModPentadicHarmony('#41EAA9')
-	#newrandColorArray = getSplitTetradicHarmony(randColorArray[0], 0.05)	
-	
-	#Print and Send Tweet
-	makeAndSaveImage(newrandColorArray)
-
 	auth = tweepy.OAuthHandler(secrets.C_KEY, secrets.C_SECRET)  
 	auth.set_access_token(secrets.A_TOKEN, secrets.A_TOKEN_SECRET)  
 	api = tweepy.API(auth)
 
-	status = convertColorsToStatus(newrandColorArray)
-	print_tweet(status)
-	api.update_with_media("./palette.png",status)
+	#colorArray = makeRandomColorPalette()
+	#status = convertColorsToStatus(colorArray)
 
+	mentions = api.mentions_timeline(count=200,since_id=829408140277972992)
+
+	for mention in mentions:
+		#	storeMentionId(mention.id)
+		userColor = getUserColor(mention.text)
+		colorArray = getColorHarmony(userColor)
+		status = '@' + mention.user.screen_name + '\n' + convertColorsToStatus(colorArray)
+
+	makeAndSaveImage(colorArray)
+
+	#Print and Send Tweet
+	printAndSendTweet(status, api)
 	
 ################################################################################################
-#send the tweet
-def print_tweet(tweet): 
+#print the tweet
+def printAndSendTweet(inStatus, inAPI):
+	
+	printTweet(inStatus)
+	inAPI.update_with_media("./palette.png",inStatus)
+
+def printTweet(tweet): 
 	print tweet
 
 def removeHash(colorString):
@@ -76,6 +77,38 @@ def makeAndSaveImage(colorArray):
 	]:
 	    ax.add_patch(p)
 	fig.savefig('palette.png', dpi=90)
+
+def getColorHarmony(inColor):
+	
+	harmonyChoice = random.randrange(0,12)
+
+	if (harmonyChoice == 0 or harmonyChoice == 1):
+		newrandColorArray = getAnalogousHarmony(inColor,0.2)
+	elif (harmonyChoice == 2):
+		newrandColorArray = getMonochromaticHarmony(inColor,0.1, 0.25)
+	elif (harmonyChoice == 3):
+		newrandColorArray = goldenRatio(inColor)
+	elif (harmonyChoice == 4 or harmonyChoice == 5):
+		newrandColorArray = getModTriadicHarmony(inColor,0.8)
+	elif (harmonyChoice == 6 or harmonyChoice == 7):
+		newrandColorArray = getPentadicHarmony(inColor, 0.1)
+	elif (harmonyChoice == 8 or harmonyChoice == 9):
+		newrandColorArray = getSplitTetradicHarmony(inColor, 0.05)
+	else: #10 or 11
+		newrandColorArray = getModPentadicHarmony(inColor)
+
+	return newrandColorArray
+
+def getUserColor(userText):
+	return '#FAB928'
+
+def makeRandomColorPalette():
+	#Create Random Color Array
+	randColor = randomcolor.RandomColor()
+	randColorArray = randColor.generate(hue="random", count=1)
+	colorArray = getColorHarmony(randColorArray[0])
+	
+	return colorArray
 
 ##############################
 #RGB Color -> 5 Offset Golden Ratio RGB Colors
