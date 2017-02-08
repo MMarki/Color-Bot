@@ -19,10 +19,11 @@ def main():
 	randColorArray = randColor.generate(hue="random", count=1)
 
 	#newrandColorArray = getAnalogousHarmony(randColorArray[0],0.2)
-	newrandColorArray = getMonochromaticHarmony(randColorArray[0],0.4, 0.6)
+	#newrandColorArray = getMonochromaticHarmony(randColorArray[0],0.4, 0.6)
 	#newrandColorArray = getModTriadicHarmony(randColorArray[0],0.8)
 	#newrandColorArray = goldenRatio(randColorArray[0])
 	#newrandColorArray = getPentadicHarmony(randColorArray[0], 0.1)
+	newrandColorArray = getModPentadicHarmony('#41EAA9')
 	#newrandColorArray = getSplitTetradicHarmony(randColorArray[0], 0.05)	
 	
 	#Print and Send Tweet
@@ -278,6 +279,30 @@ def getMonochromaticHarmony(inBaseColor, lumVariation, satVariation):
 
 	return retArray
 
+def getModPentadicHarmony(inBaseColor):
+	retArray = [0] * 5
+
+	offsetAngle = getHueOffsetArray()
+
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+
+	color1 = inBaseColor
+
+	hue = baseColorTuple[0]
+	lum = baseColorTuple[1]
+	sat = baseColorTuple[2]
+
+	retArray = [0] * 5
+
+	#RBG Hex
+	retArray[0] = color1
+
+	for index in range(1,5):
+		colorTuple = colorsys.hls_to_rgb((hue + offsetAngle[index]) % 1, lum, sat)
+		retArray[index] = fractions2Hex(colorTuple[0],colorTuple[1],colorTuple[2])
+
+	return retArray
+
 #Hex Color -> RBG Integer Values
 def getRed(inColor):
 	inColor = inColor[1:len(inColor)+1]
@@ -304,6 +329,29 @@ def blueHex2Fraction(inColor):
 #Fraction between 0 and 1 -> Hex Color
 def fractions2Hex(firstFraction, secondFraction, thirdFraction):
 	return '#' + getHex(firstFraction*255) + getHex(secondFraction*255)+ getHex(thirdFraction*255)
+
+def getHueOffsetArray():
+	arrayNumber = random.randrange(0,5)
+	hueArray0 = [0, 0.31944444444, 0.43055555555, 0.56944444444, 0.68055555555]
+	hueArray1 = [0, 0.11111111111, 0.25, 0.36111111111, 0.68055555555]
+	hueArray2 = [0, 0.13888888888, 0.25, 0.56944444444, 0.88888888888]
+	hueArray3 = [0, 0.11111111111, 0.43055555555, 0.75, 0.86111111111]
+	hueArray4 = [0, 0.31944444444, 0.63888888888, 0.75, 0.88888888888]
+
+	if (arrayNumber == 0):
+		retArray = list(hueArray0)
+	elif (arrayNumber == 1):
+		retArray = list(hueArray1)
+	elif (arrayNumber == 2):
+		retArray = list(hueArray2)
+	elif (arrayNumber == 3):
+		retArray = list(hueArray3)
+	else:
+		retArray = list(hueArray4)
+
+	print retArray
+
+	return retArray
 
 def getHex(inValue):
 	retVal = hex(int(ceil(inValue)))[2:]
