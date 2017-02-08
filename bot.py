@@ -19,8 +19,10 @@ def main():
 	randColorArray = randColor.generate(hue="random", count=1)
 
 	#newrandColorArray = getAnalogousHarmony(randColorArray[0],0.2)
-	newrandColorArray = getModTriadicHarmony(randColorArray[0],0.8)
+	#newrandColorArray = getModTriadicHarmony(randColorArray[0],0.8)
 	#newrandColorArray = goldenRatio(randColorArray[0])
+	#newrandColorArray = getPentadicHarmony(randColorArray[0], 0.1)
+	newrandColorArray = getSplitTetradicHarmony(randColorArray[0], 0.05)	
 	
 	#Print and Send Tweet
 	makeAndSaveImage(newrandColorArray)
@@ -83,13 +85,12 @@ def goldenRatio(inBaseColor):
 	color[0] = inBaseColor
 
 	hue = baseColorTuple[0]
-	print hue
 	sat = baseColorTuple[1]
 	value = baseColorTuple[2]
 
 	for i in range(1,5):
 		print (hue + (0.0618033988749895 * i)) % 1
-		colorTuple = colorsys.hsv_to_rgb((hue + (0.0618033988749895 * i)) % 1, sat, value);
+		colorTuple = colorsys.hsv_to_rgb((hue + (0.0618033988749895 * i)) % 1, sat, value)
 		color[i] = fractions2Hex(colorTuple[0],colorTuple[1],colorTuple[2])
 
 	return color
@@ -163,6 +164,27 @@ def getModTriadicHarmony(inBaseColor, hueVariation):
 	#new hues, same sats and value
 	return retArray
 
+#RGB Color -> 5 Pentadic RGB Colors
+def getPentadicHarmony(inBaseColor, hueVariation):
+	oneFifth = 0.2
+	#hls tuple
+	baseColorTuple = colorsys.rgb_to_hsv(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+
+	color = [0] * 5
+	color[0] = inBaseColor
+
+	hue = baseColorTuple[0]
+	sat = baseColorTuple[1]
+	value = baseColorTuple[2]
+
+	for i in range(1,5):
+		print (hue + (oneFifth * i)) % 1
+		colorTuple = colorsys.hsv_to_rgb((hue + (oneFifth * i)) % 1, sat, value)
+		color[i] = fractions2Hex(colorTuple[0],colorTuple[1],colorTuple[2])
+
+	#new hues, same sats and value
+	return color
+
 #RBG Color -> 5 Analogous RGB Colors
 def getAnalogousHarmony(inBaseColor, hueVariation):
 	#hls tuple
@@ -170,11 +192,15 @@ def getAnalogousHarmony(inBaseColor, hueVariation):
 
 	color1 = inBaseColor
 
+	hue = baseColorTuple[0]
+	lum = baseColorTuple[1]
+	sat = baseColorTuple[2]
+
 	#rgb tuples
-	colorTuple2 = colorsys.hls_to_rgb(baseColorTuple[0] + float(hueVariation)/2, baseColorTuple[1], baseColorTuple[2])
-	colorTuple3 = colorsys.hls_to_rgb(baseColorTuple[0] + float(hueVariation), baseColorTuple[1], baseColorTuple[2])
-	colorTuple4 = colorsys.hls_to_rgb(baseColorTuple[0] - float(hueVariation)/2, baseColorTuple[1], baseColorTuple[2])
-	colorTuple5 = colorsys.hls_to_rgb(baseColorTuple[0] - float(hueVariation), baseColorTuple[1], baseColorTuple[2])
+	colorTuple2 = colorsys.hls_to_rgb(hue + float(hueVariation)/2, lum, sat)
+	colorTuple3 = colorsys.hls_to_rgb(hue + float(hueVariation), lum, sat)
+	colorTuple4 = colorsys.hls_to_rgb(hue - float(hueVariation)/2, lum, sat)
+	colorTuple5 = colorsys.hls_to_rgb(hue - float(hueVariation), lum, sat)
 
 	#RBG Hex
 	color2 = fractions2Hex(colorTuple2[0],colorTuple2[1],colorTuple2[2])
@@ -190,6 +216,36 @@ def getAnalogousHarmony(inBaseColor, hueVariation):
 	retArray[2] = color1
 	retArray[3] = color4
 	retArray[4] = color5
+
+	return retArray
+
+#RBG Color -> 5 split tetradic RGB Colors
+def getSplitTetradicHarmony(inBaseColor, hueVariation):
+	compAngle = 0.5
+
+	#hls tuple
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+
+	color1 = inBaseColor
+
+	hue = baseColorTuple[0]
+	lum = baseColorTuple[1]
+	sat = baseColorTuple[2]
+
+	#rgb tuples
+	colorTuple2 = colorsys.hls_to_rgb((hue - float(hueVariation)) % 1, lum, sat)
+	colorTuple3 = colorsys.hls_to_rgb((hue + float(hueVariation)) % 1, lum, sat)
+	colorTuple4 = colorsys.hls_to_rgb((hue + compAngle - float(hueVariation)) % 1, lum, sat)
+	colorTuple5 = colorsys.hls_to_rgb((hue + compAngle + float(hueVariation)) % 1, lum, sat)
+
+	retArray = [0] * 5
+
+	#RBG Hex
+	retArray[0] = fractions2Hex(colorTuple2[0],colorTuple2[1],colorTuple2[2])
+	retArray[1] = color1
+	retArray[2] = fractions2Hex(colorTuple3[0],colorTuple3[1],colorTuple3[2])
+	retArray[3] = fractions2Hex(colorTuple4[0],colorTuple4[1],colorTuple4[2])
+	retArray[4] = fractions2Hex(colorTuple5[0],colorTuple5[1],colorTuple5[2])
 
 	return retArray
 
