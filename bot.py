@@ -2,7 +2,8 @@ import tweepy
 import secrets
 import random
 import string
-from math import sqrt, sin, cos
+import colorsys
+from math import sqrt, sin, cos, ceil
 
 import randomcolor
 
@@ -17,20 +18,23 @@ def main():
 	randColor = randomcolor.RandomColor()
 	randColorArray = randColor.generate(hue="random", count=5)
 
-	makeAndSaveImage(randColorArray)
+	#Print and Send Tweet
+	newrandColorArray = getAnalogousHarmony(randColorArray[0],0.2)
+
+	makeAndSaveImage(newrandColorArray)
+	
+	#randColorArray[3] = RandomMix(randColorArray[0], randColorArray[1], randColorArray[2],3)
+	#randColorArray[4] = RandomMix(randColorArray[0], randColorArray[1], randColorArray[2],3)
 
 	auth = tweepy.OAuthHandler(secrets.C_KEY, secrets.C_SECRET)  
 	auth.set_access_token(secrets.A_TOKEN, secrets.A_TOKEN_SECRET)  
 	api = tweepy.API(auth)
 
-	#Print and Send Tweet
-	randColorArray[3] = RandomMix(randColorArray[0], randColorArray[1], randColorArray[2],3)
-	randColorArray[4] = RandomMix(randColorArray[0], randColorArray[1], randColorArray[2],3)
-	
-	status = convertColorsToStatus(randColorArray)
+	status = convertColorsToStatus(newrandColorArray)
 	print_tweet(status)
 	api.update_with_media("./palette.png",status)
 
+	
 ################################################################################################
 #send the tweet
 def print_tweet(tweet): 
@@ -70,8 +74,9 @@ def makeAndSaveImage(colorArray):
 	    ax.add_patch(p)
 	fig.savefig('palette.png', dpi=90)  #bbox_inches='tight', pad_inches=0
 ##############################
-
+#Takes 3 Hex RBG Colors -> Returns 5 Hex RGB Colors
 def RandomMix(color1, color2, color3, greyControl):
+	#color1 ex: #00FFAA
 
 	randomIndex = random.randint(1,3)
 
@@ -105,6 +110,75 @@ def RandomMix(color1, color2, color3, greyControl):
 	print hex(int(float(colorStringG)))
 	print hex(int(float(colorStringB)))
 
+#HSV Color -> 5 Modified Triadic RGB Colors
+def getModTriadicHarmony(hue, sat, value, deltaParam):
+	oneThird = 0.3333
+	h1 = hue
+	h2s = (h1 + oneThird)
+	h3s = (h2s + oneThird)
+
+	#need to even out h2s and h3s
+
+	delta = 0.06*deltaParam
+	h2 = (h2s - delta)
+	h3 = (h2s + delta)
+	h4 = (h3s - delta)
+	h5 = (h3s + delta)
+
+	#rgb tuples
+	colorTuple1 = colorsys.hsv_to_rgb(h1, sat, value)
+	colorTuple2 = colorsys.hsv_to_rgb(h2, sat, value)
+	colorTuple3 = colorsys.hsv_to_rgb(h3, sat, value)
+	colorTuple4 = colorsys.hsv_to_rgb(h4 ,sat, value)
+	colorTuple5 = colorsys.hsv_to_rgb(h5, sat, value)
+
+	#Hex Colors
+	color1 = fractions2Hex(colorTuple1[0],colorTuple1[1],colorTuple1[2])
+	color2 = fractions2Hex(colorTuple2[0],colorTuple2[1],colorTuple2[2])
+	color3 = fractions2Hex(colorTuple3[0],colorTuple3[1],colorTuple3[2])
+	color4 = fractions2Hex(colorTuple4[0],colorTuple4[1],colorTuple4[2])
+	color5 = fractions2Hex(colorTuple5[0],colorTuple5[1],colorTuple5[2])
+
+	retArray = [0] * 5
+
+	#new hues, same sats and value
+	retArray[0] = color1
+	retArray[1] = color2
+	retArray[2] = color2
+	retArray[3] = color4
+	retArray[4] = color5
+
+	return retArray
+
+#RBG Color -> 5 Analogous RGB Colors
+def getAnalogousHarmony(inBaseColor, hueVariation):
+	#hls tuple
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+
+	color1 = inBaseColor
+
+	#rgb tuples
+	colorTuple2 = colorsys.hls_to_rgb(baseColorTuple[0] + float(hueVariation)/2, baseColorTuple[1], baseColorTuple[2])
+	colorTuple3 = colorsys.hls_to_rgb(baseColorTuple[0] + float(hueVariation), baseColorTuple[1], baseColorTuple[2])
+	colorTuple4 = colorsys.hls_to_rgb(baseColorTuple[0] - float(hueVariation)/2, baseColorTuple[1], baseColorTuple[2])
+	colorTuple5 = colorsys.hls_to_rgb(baseColorTuple[0] - float(hueVariation), baseColorTuple[1], baseColorTuple[2])
+
+	color2 = fractions2Hex(colorTuple2[0],colorTuple2[1],colorTuple2[2])
+	color3 = fractions2Hex(colorTuple3[0],colorTuple3[1],colorTuple3[2])
+	color4 = fractions2Hex(colorTuple4[0],colorTuple4[1],colorTuple4[2])
+	color5 = fractions2Hex(colorTuple5[0],colorTuple5[1],colorTuple5[2])
+
+	retArray = [0] * 5
+
+	retArray[0] = color3
+	retArray[1] = color2
+	retArray[2] = color1
+	retArray[3] = color4
+	retArray[4] = color5
+
+	return retArray
+
+#Hex Color -> RBG Integer Values
 def getRed(inColor):
 	inColor = inColor[1:len(inColor)+1]
 	return int(inColor[0:2], 16)
@@ -117,19 +191,26 @@ def getBlue(inColor):
 	inColor = inColor[1:len(inColor)+1]
 	return int(inColor[4:6], 16)
 
-#######################
-def getFiveColors(hue, sat, value, delta):
-    		oneThird = 52
-            h0 = hue
-            h1s = (h0 + oneThird) % 1.0
-            h2s = (h1s + oneThird) % 1.0
-            delta = 0.06*parameter
-            h1 = (h1s - delta) % 1.0
-            h2 = (h1s + delta) % 1.0
-            h3 = (h2s - delta) % 1.0
-            h4 = (h2s + delta) % 1.0
+#Hex Color -> Fraction between 0 and 1
+def redHex2Fraction(inColor):
+	return float(getRed(inColor))/255
 
-            #new hues, same sats and values
+def greenHex2Fraction(inColor):
+	return float(getGreen(inColor))/255
+
+def blueHex2Fraction(inColor):
+	return float(getBlue(inColor))/255
+
+#Fraction between 0 and 1 -> Hex Color
+def fractions2Hex(firstFraction, secondFraction, thirdFraction):
+	return '#' + getHex(firstFraction*255) + getHex(secondFraction*255)+ getHex(thirdFraction*255)
+
+def getHex(inValue):
+	retVal = hex(int(ceil(inValue)))[2:]
+	if len(retVal) == 1:
+		retVal ='0' + retVal
+	return retVal
+
 ######################################################
 if __name__ == "__main__":
 	main()
