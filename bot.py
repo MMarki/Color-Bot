@@ -21,25 +21,36 @@ def main():
 	#colorArray = makeRandomColorPalette()
 	#status = convertColorsToStatus(colorArray)
 
-	mentions = api.mentions_timeline(count=200,since_id=829408140277972992)
+	#Open player_status file
+	f_status = open('./status.txt', 'r+')
+
+	#Player status file setup
+	topMentionId = f_status.readline()
+	topMentionId = int(topMentionId.rstrip('\n'))
+
+	print topMentionId
+
+	mentions = api.mentions_timeline(since_id=topMentionId, count=200)
 
 	for mention in mentions:
-		#	storeMentionId(mention.id)
+		print mention.id
+		topMentionId = storeMentionId(mention.id, topMentionId,f_status)
 		userColor = getUserColor(mention.text)
 		colorArray = getColorHarmony(userColor)
 		status = '@' + mention.user.screen_name + '\n' + convertColorsToStatus(colorArray)
 
-	makeAndSaveImage(colorArray)
+		#Print and Send Tweet
+		makeAndSaveImage(colorArray)
+		printAndSendTweet(status, api, mention.id)
 
-	#Print and Send Tweet
-	printAndSendTweet(status, api)
+	f_status.close()
 	
 ################################################################################################
 #print the tweet
-def printAndSendTweet(inStatus, inAPI):
+def printAndSendTweet(inStatus, inAPI, inMentionId):
 	
 	printTweet(inStatus)
-	inAPI.update_with_media("./palette.png",inStatus)
+	inAPI.update_with_media("./palette.png",inStatus, in_reply_to_status_id=inMentionId)
 
 def printTweet(tweet): 
 	print tweet
@@ -110,6 +121,14 @@ def makeRandomColorPalette():
 	
 	return colorArray
 
+def storeMentionId(inMentionId, inTopMentionId,inFile):
+	if (inMentionId > inTopMentionId):
+		inFile.seek(0)
+		inFile.write(str(inMentionId) + '\n')
+		return inMentionId
+	else:
+		return inTopMentionId
+
 ##############################
 #RGB Color -> 5 Offset Golden Ratio RGB Colors
 def goldenRatio(inBaseColor):
@@ -124,7 +143,6 @@ def goldenRatio(inBaseColor):
 	value = baseColorTuple[2]
 
 	for i in range(1,5):
-		print (hue + (0.0618033988749895 * i)) % 1
 		colorTuple = colorsys.hsv_to_rgb((hue + (0.0618033988749895 * i)) % 1, sat, value)
 		color[i] = fractions2Hex(colorTuple[0],colorTuple[1],colorTuple[2])
 
@@ -213,7 +231,6 @@ def getPentadicHarmony(inBaseColor, hueVariation):
 	value = baseColorTuple[2]
 
 	for i in range(1,5):
-		print (hue + (oneFifth * i)) % 1
 		colorTuple = colorsys.hsv_to_rgb((hue + (oneFifth * i)) % 1, sat, value)
 		color[i] = fractions2Hex(colorTuple[0],colorTuple[1],colorTuple[2])
 
@@ -381,8 +398,6 @@ def getHueOffsetArray():
 		retArray = list(hueArray3)
 	else:
 		retArray = list(hueArray4)
-
-	print retArray
 
 	return retArray
 
