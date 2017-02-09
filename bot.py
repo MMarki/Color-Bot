@@ -1,6 +1,7 @@
 import tweepy
 import secrets
 import random
+import re
 import string
 import colorsys
 from math import sqrt, sin, cos, ceil
@@ -111,7 +112,21 @@ def getColorHarmony(inColor):
 	return newrandColorArray
 
 def getUserColor(userText):
-	return '#FAB928'
+
+	colors = re.findall('[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]',userText)
+	if (len(colors) < 1):
+		colors = re.findall('[0-9A-F][0-9A-F][0-9A-F]',userText)
+		if (len(colors) < 1):
+			return "I don't see a color."
+		else:
+			returnText = '#' + doubleString(colors[0])
+	else:
+		returnText = '#' + colors[0]
+
+	if (len(returnText) == 7):
+		return returnText
+	else:
+		return "I don't see a color."
 
 def makeRandomColorPalette():
 	#Create Random Color Array
@@ -120,6 +135,9 @@ def makeRandomColorPalette():
 	colorArray = getColorHarmony(randColorArray[0])
 	
 	return colorArray
+
+def doubleString(inString):
+    return ''.join([x*2 for x in inString])
 
 def storeMentionId(inMentionId, inTopMentionId,inFile):
 	if (inMentionId > inTopMentionId):
