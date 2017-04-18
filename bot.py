@@ -19,6 +19,8 @@ def main():
 	auth.set_access_token(secrets.A_TOKEN, secrets.A_TOKEN_SECRET)  
 	api = tweepy.API(auth)
 
+	colorFailure = "I didn't see a color, so I made you this: "
+
 	#colorArray = makeRandomColorPalette()
 	#status = convertColorsToStatus(colorArray)
 
@@ -29,16 +31,18 @@ def main():
 	topMentionId = f_status.readline()
 	topMentionId = int(topMentionId.rstrip('\n'))
 
-	print topMentionId
-
 	mentions = api.mentions_timeline(since_id=topMentionId, count=200)
 
 	for mention in mentions:
 		print mention.id
 		topMentionId = storeMentionId(mention.id, topMentionId,f_status)
 		userColor = getUserColor(mention.text)
-		colorArray = getColorHarmony(userColor)
-		status = '@' + mention.user.screen_name + '\n' + convertColorsToStatus(colorArray)
+		if (userColor == colorFailure):
+			colorArray = makeRandomColorPalette()
+			status = '@' + mention.user.screen_name + colorFailure + '\n' + convertColorsToStatus(colorArray)
+		else:
+			colorArray = getColorHarmony(userColor)
+			status = '@' + mention.user.screen_name + '\n' + convertColorsToStatus(colorArray)
 
 		#Print and Send Tweet
 		makeAndSaveImage(colorArray)
@@ -117,7 +121,7 @@ def getUserColor(userText):
 	if (len(colors) < 1):
 		colors = re.findall('[0-9A-F][0-9A-F][0-9A-F]',userText)
 		if (len(colors) < 1):
-			return "I don't see a color."
+			return "I didn't see a color, so I made you this: "
 		else:
 			returnText = '#' + doubleString(colors[0])
 	else:
@@ -126,7 +130,7 @@ def getUserColor(userText):
 	if (len(returnText) == 7):
 		return returnText
 	else:
-		return "I don't see a color."
+		return "I didn't see a color, so I made you this: "
 
 def makeRandomColorPalette():
 	#Create Random Color Array
@@ -151,7 +155,9 @@ def storeMentionId(inMentionId, inTopMentionId,inFile):
 #RGB Color -> 5 Offset Golden Ratio RGB Colors
 def goldenRatio(inBaseColor):
 
-	baseColorTuple = colorsys.rgb_to_hsv(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	inColor = fixHueless(inBaseColor)
+
+	baseColorTuple = colorsys.rgb_to_hsv(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	color = [0] * 5
 	color[0] = inBaseColor
@@ -201,8 +207,10 @@ def getTriadicHarmony(inBaseColor):
 #RGB Color -> 5 Modified Triadic RGB Colors
 def getModTriadicHarmony(inBaseColor, hueVariation):
 	oneThird = 0.3333
+
+	inColor = fixHueless(inBaseColor)
 	#hls tuple
-	baseColorTuple = colorsys.rgb_to_hsv(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	baseColorTuple = colorsys.rgb_to_hsv(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	retArray = [0] * 5
 	retArray[0] = inBaseColor
@@ -238,8 +246,10 @@ def getModTriadicHarmony(inBaseColor, hueVariation):
 #RGB Color -> 5 Pentadic RGB Colors
 def getPentadicHarmony(inBaseColor, hueVariation):
 	oneFifth = 0.2
+
+	inColor = fixHueless(inBaseColor)
 	#hls tuple
-	baseColorTuple = colorsys.rgb_to_hsv(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	baseColorTuple = colorsys.rgb_to_hsv(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	color = [0] * 5
 	color[0] = inBaseColor
@@ -257,8 +267,10 @@ def getPentadicHarmony(inBaseColor, hueVariation):
 
 #RBG Color -> 5 Analogous RGB Colors
 def getAnalogousHarmony(inBaseColor, hueVariation):
+	
+	inColor = fixHueless(inBaseColor)
 	#hls tuple
-	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	color1 = inBaseColor
 
@@ -293,8 +305,10 @@ def getAnalogousHarmony(inBaseColor, hueVariation):
 def getSplitTetradicHarmony(inBaseColor, hueVariation):
 	compAngle = 0.5
 
+	inColor = fixHueless(inBaseColor)
+
 	#hls tuple
-	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	color1 = inBaseColor
 
@@ -321,8 +335,11 @@ def getSplitTetradicHarmony(inBaseColor, hueVariation):
 
 #RBG Color -> 5 Monochromatic RGB Colors
 def getMonochromaticHarmony(inBaseColor, lumVariation, satVariation):
+	
+	inColor = fixHueless(inBaseColor)
+
 	#hls tuple
-	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	color1 = inBaseColor
 
@@ -352,7 +369,9 @@ def getModPentadicHarmony(inBaseColor):
 
 	offsetAngle = getHueOffsetArray()
 
-	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	inColor = fixHueless(inBaseColor)
+
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	color1 = inBaseColor
 
@@ -424,6 +443,56 @@ def getHex(inValue):
 	if len(retVal) == 1:
 		retVal ='0' + retVal
 	return retVal
+
+def checkIfHueless(inColor):
+	inColor = inColor[1:len(inColor)+1]
+	firstValue = inColor[1]
+	for char in inColor:
+		if char != firstValue:
+			return False
+
+	return True
+
+def fixHueless(inColor):
+	if checkIfHueless(inColor):
+		inColor = inColor[1:len(inColor)+1]
+		newColorList = list(inColor)
+		newColorList[random.randint(0,len(newColorList) -1)] = newLetter(inColor)
+		newColor = ''.join(newColorList)
+		return newColor
+	else:
+		return inColor
+
+def newLetter(inColorNoHash):
+	currentLetter = inColorNoHash[0]
+	newLetter = '8'
+	switcher = {
+			0: '0',
+			1: '1',
+			2: '2',
+			3: '3',
+			4: '4',
+			5: '5',
+			6: '6',
+			7: '7',
+			8: '8',
+			9: '9',
+			10: 'A',
+			11: 'B',
+			12: 'C',
+			13: 'D',
+			14: 'E',
+			15: 'F'
+		}
+	
+	while(1):
+		newLetterIndex = random.randint(0,15)
+
+		newLetter = switcher.get(newLetterIndex,'8')
+		if newLetter != currentLetter:
+			break
+
+	return newLetter
 
 ######################################################
 if __name__ == "__main__":
