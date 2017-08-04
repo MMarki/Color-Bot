@@ -14,46 +14,41 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-def main():
+def main():	
+	auth = tweepy.OAuthHandler(secrets.C_KEY, secrets.C_SECRET)  
+	auth.set_access_token(secrets.A_TOKEN, secrets.A_TOKEN_SECRET)  
+	api = tweepy.API(auth)
 
-	inColor = '#FFFFFF'
+	colorFailure = "I didn't see a color, so I made you this: "
 
-	print fixHueless(inColor)
+	#colorArray = makeRandomColorPalette()
+	#status = convertColorsToStatus(colorArray)
 
-	colorArray = getAnalogousHarmony(inColor,0.2)
-	status = convertColorsToStatus(colorArray)
-	print status
-	print ''
+	#Open player_status file
+	f_status = open('./status.txt', 'r+')
 
-	colorArray = getMonochromaticHarmony(inColor,0.1, 0.25)
-	status = convertColorsToStatus(colorArray)
-	print status
-	print ''
+	#Player status file setup
+	topMentionId = f_status.readline()
+	topMentionId = int(topMentionId.rstrip('\n'))
 
-	colorArray = goldenRatio(inColor)
-	status = convertColorsToStatus(colorArray)
-	print status
-	print ''
+	mentions = api.mentions_timeline(since_id=topMentionId, count=200)
 
-	colorArray = getModTriadicHarmony(inColor,0.8)
-	status = convertColorsToStatus(colorArray)
-	print status
-	print ''
+	for mention in mentions:
+		print mention.id
+		topMentionId = storeMentionId(mention.id, topMentionId,f_status)
+		userColor = getUserColor(mention.text)
+		if (userColor == colorFailure):
+			colorArray = makeRandomColorPalette()
+			status = '@' + mention.user.screen_name + colorFailure + '\n' + convertColorsToStatus(colorArray)
+		else:
+			colorArray = getColorHarmony(userColor)
+			status = '@' + mention.user.screen_name + '\n' + convertColorsToStatus(colorArray)
 
-	colorArray = getPentadicHarmony(inColor, 0.1)
-	status = convertColorsToStatus(colorArray)
-	print status
-	print ''
+		#Print and Send Tweet
+		makeAndSaveImage(colorArray)
+		printAndSendTweet(status, api, mention.id)
 
-	colorArray = getSplitTetradicHarmony(inColor, 0.05)
-	status = convertColorsToStatus(colorArray)
-	print status
-	print ''
-
-	colorArray = getModPentadicHarmony(inColor)
-	status = convertColorsToStatus(colorArray)
-	print status
-
+	f_status.close()
 	
 ################################################################################################
 #print the tweet
@@ -126,7 +121,11 @@ def getUserColor(userText):
 	if (len(colors) < 1):
 		colors = re.findall('[0-9A-F][0-9A-F][0-9A-F]',userText)
 		if (len(colors) < 1):
-			return "I don't see a color here."
+			newColors = findColorWords(userText)
+			if (len(newColors) < 1):
+				return "I didn't see a color, so I made you this: "
+			else:
+				returnText = newColors
 		else:
 			returnText = '#' + doubleString(colors[0])
 	else:
@@ -135,7 +134,7 @@ def getUserColor(userText):
 	if (len(returnText) == 7):
 		return returnText
 	else:
-		return "I don't see a color here."
+		return "I didn't see a color, so I made you this: "
 
 def makeRandomColorPalette():
 	#Create Random Color Array
@@ -144,6 +143,44 @@ def makeRandomColorPalette():
 	colorArray = getColorHarmony(randColorArray[0])
 	
 	return colorArray
+
+def findColorWords(inString):
+	recognizedColors = {'dark red': '#990000',
+						'light red': '#FF4242',
+						'dark green': '#004900',
+						'light green': '#19E519',
+						'dark blue': '#000075',
+						'light blue': '#3F7FFF',
+						'dark yellow': '#D1BC34',
+						'gold': '#D1BC34',
+						'light yellow': '#FFF950',
+						'orange': '#FF6500',
+						'cyan': '#2DFDFF',
+						'magenta': '#FF00FF',
+						'silver': '#C0C0C0',
+						'purple': '#800080',
+						'fuchsia': '#FF00FF',
+						'pink': '#FF70B2',
+						'brown': '#68422E',
+						'navy': '#000080',
+						'blue': '#0000FF',
+						'teal': '#008080',
+						'aqua': '#00FFFF',
+						'green': '#008000',
+						'lime': '#00FF00',
+						'olive': '#808000',
+						'yellow': '#FFFF00',
+						'maroon': '#800000',
+						'red': '#FF0000',
+						'grey': '#AAAAAA',
+						'gray': '#AAAAAA',
+						'white': '#FFFFFF',
+						'black': '#000000'}
+
+	for key in recognizedColors:
+		if (key in inString): return recognizedColors[key]
+
+	return 
 
 def doubleString(inString):
     return ''.join([x*2 for x in inString])
@@ -214,7 +251,6 @@ def getModTriadicHarmony(inBaseColor, hueVariation):
 	oneThird = 0.3333
 
 	inColor = fixHueless(inBaseColor)
-
 	#hls tuple
 	baseColorTuple = colorsys.rgb_to_hsv(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
@@ -273,8 +309,10 @@ def getPentadicHarmony(inBaseColor, hueVariation):
 
 #RBG Color -> 5 Analogous RGB Colors
 def getAnalogousHarmony(inBaseColor, hueVariation):
+	
+	inColor = fixHueless(inBaseColor)
 	#hls tuple
-	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	color1 = inBaseColor
 
@@ -309,8 +347,10 @@ def getAnalogousHarmony(inBaseColor, hueVariation):
 def getSplitTetradicHarmony(inBaseColor, hueVariation):
 	compAngle = 0.5
 
+	inColor = fixHueless(inBaseColor)
+
 	#hls tuple
-	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	color1 = inBaseColor
 
@@ -337,8 +377,11 @@ def getSplitTetradicHarmony(inBaseColor, hueVariation):
 
 #RBG Color -> 5 Monochromatic RGB Colors
 def getMonochromaticHarmony(inBaseColor, lumVariation, satVariation):
+	
+	inColor = fixHueless(inBaseColor)
+
 	#hls tuple
-	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	color1 = inBaseColor
 
@@ -368,7 +411,9 @@ def getModPentadicHarmony(inBaseColor):
 
 	offsetAngle = getHueOffsetArray()
 
-	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inBaseColor), greenHex2Fraction(inBaseColor), blueHex2Fraction(inBaseColor))
+	inColor = fixHueless(inBaseColor)
+
+	baseColorTuple = colorsys.rgb_to_hls(redHex2Fraction(inColor), greenHex2Fraction(inColor), blueHex2Fraction(inColor))
 
 	color1 = inBaseColor
 
