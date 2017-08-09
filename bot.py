@@ -140,21 +140,52 @@ def makeRandomColorPalette():
 	#Create Random Color Array
 	randColor = randomcolor.RandomColor()
 	randColorArray = randColor.generate(hue="random", count=1)
-	colorArray = getColorHarmony(randColorArray[0])
+	colorArray = getColorHarmony(lightenColor(randColorArray[0]))
 	
 	return colorArray
 
+def lightenColor(inColor):
+    if inColor[1] < '4':
+        inColor[1] = '4'
+    if inColor[3] < '4':
+        inColor[1] = '4'
+    if inColor[5] < '4':
+        inColor[1] = '4'
+        
+    return inColor
+
 def findColorWords(inString):
-	recognizedColors = {'dark red': '#990000',
+	recognizedColors = {'chrome': '#B7BAC1',
+                        'lilac': '#B666D2',
+                        'slate': '#9098A3',
+                        'steel': '#8CA2A3',
+                        'indigo': '#141951',
+                        'turquoise': '#42F2F7',
+                        'mauve': '#DAB6FC',
+                        'hot pink': '#FC4CFF',
+                        'chartreuse': '#CFCE74',
+                        'cornflower blue': '#659CEF',
+                        'light orange': '#FFA14F',
+                        'blood orange': '#E7341D',
+                        'ivory': '#FEFAEF',
+                        'nude': '#F1D5BF',
+                        'sand': '#ECDFCC',
+                        'beige': '#D5B795',
+                        'mocha': '#987E6D',
+                        'taupe': '#A08A7F',
+                        'camel': '#A87D5B',
+                        'dark orange': '#FF6500',
+                        'dark red': '#990000',
 						'light red': '#FF4242',
-						'dark green': '#004900',
+						'dark green': '#005600',
 						'light green': '#19E519',
-						'dark blue': '#000075',
+                        'lime green': '#00FF00',
+						'dark blue': '#000095',
 						'light blue': '#3F7FFF',
 						'dark yellow': '#D1BC34',
 						'gold': '#D1BC34',
 						'light yellow': '#FFF950',
-						'orange': '#FF6500',
+						'orange': '#FF851B',
 						'cyan': '#2DFDFF',
 						'magenta': '#FF00FF',
 						'silver': '#C0C0C0',
@@ -163,14 +194,14 @@ def findColorWords(inString):
 						'pink': '#FF70B2',
 						'brown': '#68422E',
 						'navy': '#000080',
-						'blue': '#0000FF',
-						'teal': '#008080',
+						'blue': '#0074D9',
+						'teal': '#39CCCC',
 						'aqua': '#00FFFF',
 						'green': '#008000',
 						'lime': '#00FF00',
-						'olive': '#808000',
+						'olive': '#3D9970',
 						'yellow': '#FFFF00',
-						'maroon': '#800000',
+						'maroon': '#85144b',
 						'red': '#FF0000',
 						'grey': '#AAAAAA',
 						'gray': '#AAAAAA',
