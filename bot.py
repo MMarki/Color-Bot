@@ -4,6 +4,7 @@ import random
 import re
 import string
 import colorsys
+import collections
 from math import sqrt, sin, cos, ceil
 
 import randomcolor
@@ -25,7 +26,7 @@ def main():
 	#status = convertColorsToStatus(colorArray)
 
 	#Open player_status file
-	f_status = open('./status.txt', 'r+')
+	f_status = open('/home/pi/Desktop/ColorBot/status.txt', 'r+')
 
 	#Player status file setup
 	topMentionId = f_status.readline()
@@ -35,7 +36,7 @@ def main():
 
 	for mention in mentions:
 		print mention.id
-		topMentionId = storeMentionId(mention.id, topMentionId,f_status)
+		print mention.text
 		userColor = getUserColor(mention.text)
 		if (userColor == colorFailure):
 			colorArray = makeRandomColorPalette()
@@ -43,6 +44,8 @@ def main():
 		else:
 			colorArray = getColorHarmony(userColor)
 			status = '@' + mention.user.screen_name + '\n' + convertColorsToStatus(colorArray)
+
+                topMentionId = storeMentionId(mention.id, topMentionId,f_status)
 
 		#Print and Send Tweet
 		makeAndSaveImage(colorArray)
@@ -55,7 +58,7 @@ def main():
 def printAndSendTweet(inStatus, inAPI, inMentionId):
 	
 	printTweet(inStatus)
-	inAPI.update_with_media("./palette.png",inStatus, in_reply_to_status_id=inMentionId)
+	inAPI.update_with_media("/home/pi/Desktop/ColorBot/palette.png",inStatus, in_reply_to_status_id=inMentionId)
 
 def printTweet(tweet): 
 	print tweet
@@ -92,7 +95,7 @@ def makeAndSaveImage(colorArray):
 	    ),
 	]:
 	    ax.add_patch(p)
-	fig.savefig('palette.png', dpi=90)
+	fig.savefig('/home/pi/Desktop/ColorBot/palette.png', dpi=90)
 
 def getColorHarmony(inColor):
 	
@@ -118,11 +121,11 @@ def getColorHarmony(inColor):
 def getUserColor(userText):
 
 	colors = re.findall('[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]',userText)
-	if (len(colors) < 1):
+	if isEmpty(colors):
 		colors = re.findall('[0-9A-F][0-9A-F][0-9A-F]',userText)
-		if (len(colors) < 1):
+		if isEmpty(colors):
 			newColors = findColorWords(userText)
-			if (len(newColors) < 1):
+			if isEmpty(colors):
 				return "I didn't see a color, so I made you this: "
 			else:
 				returnText = newColors
@@ -136,6 +139,14 @@ def getUserColor(userText):
 	else:
 		return "I didn't see a color, so I made you this: "
 
+def isEmpty(colorList):
+
+        if (colorList is None):
+                return True
+        if (len(colorList) < 1):
+                return True
+        return False
+
 def makeRandomColorPalette():
 	#Create Random Color Array
 	randColor = randomcolor.RandomColor()
@@ -145,68 +156,71 @@ def makeRandomColorPalette():
 	return colorArray
 
 def lightenColor(inColor):
-    if inColor[1] < '4':
-        inColor[1] = '4'
-    if inColor[3] < '4':
-        inColor[1] = '4'
-    if inColor[5] < '4':
-        inColor[1] = '4'
-        
-    return inColor
+	if inColor[1] < '4':
+		inColor[1] = '4'
+	if inColor[3] < '4':
+		inColor[1] = '4'
+	if inColor[5] < '4':
+		inColor[1] = '4'
+	
+	return inColor
+
 
 def findColorWords(inString):
-	recognizedColors = {'chrome': '#B7BAC1',
-                        'lilac': '#B666D2',
-                        'slate': '#9098A3',
-                        'steel': '#8CA2A3',
-                        'indigo': '#141951',
-                        'turquoise': '#42F2F7',
-                        'mauve': '#DAB6FC',
-                        'hot pink': '#FC4CFF',
-                        'chartreuse': '#CFCE74',
-                        'cornflower blue': '#659CEF',
-                        'light orange': '#FFA14F',
-                        'blood orange': '#E7341D',
-                        'ivory': '#FEFAEF',
-                        'nude': '#F1D5BF',
-                        'sand': '#ECDFCC',
-                        'beige': '#D5B795',
-                        'mocha': '#987E6D',
-                        'taupe': '#A08A7F',
-                        'camel': '#A87D5B',
-                        'dark orange': '#FF6500',
-                        'dark red': '#990000',
-						'light red': '#FF4242',
-						'dark green': '#005600',
-						'light green': '#19E519',
-                        'lime green': '#00FF00',
-						'dark blue': '#000095',
-						'light blue': '#3F7FFF',
-						'dark yellow': '#D1BC34',
-						'gold': '#D1BC34',
-						'light yellow': '#FFF950',
-						'orange': '#FF851B',
-						'cyan': '#2DFDFF',
-						'magenta': '#FF00FF',
-						'silver': '#C0C0C0',
-						'purple': '#800080',
-						'fuchsia': '#FF00FF',
-						'pink': '#FF70B2',
-						'brown': '#68422E',
-						'navy': '#000080',
-						'blue': '#0074D9',
-						'teal': '#39CCCC',
-						'aqua': '#00FFFF',
-						'green': '#008000',
-						'lime': '#00FF00',
-						'olive': '#3D9970',
-						'yellow': '#FFFF00',
-						'maroon': '#85144b',
-						'red': '#FF0000',
-						'grey': '#AAAAAA',
-						'gray': '#AAAAAA',
-						'white': '#FFFFFF',
-						'black': '#000000'}
+	recognizedColors = collections.OrderedDict()
+
+        recognizedColors['chrome'] = '#B7BAC1'
+        recognizedColors['lilac'] = '#B666D2'
+        recognizedColors['slate'] = '#9098A3'
+        recognizedColors['steel'] = '#8CA2A3'
+        recognizedColors['indigo'] = '#141951'
+        recognizedColors['turquoise'] = '#42F2F7'
+        recognizedColors['mauve'] = '#DAB6FC'
+        recognizedColors['hot pink'] = '#FC4CFF'
+        recognizedColors['chartreuse'] = '#CFCE74'
+        recognizedColors['cornflower blue'] = '#659CEF'
+        recognizedColors['light orange'] = '#FFA14F'
+        recognizedColors['blood orange'] = '#E7341D'
+        recognizedColors['ivory'] = '#FEFAEF'
+        recognizedColors['nude'] = '#F1D5BF'
+        recognizedColors['sand'] = '#ECDFCC'
+        recognizedColors['beige'] = '#D5B795'
+        recognizedColors['mocha'] = '#987E6D'
+        recognizedColors['taupe'] = '#A08A7F'
+        recognizedColors['camel'] = '#A87D5B'
+        recognizedColors['dark orange'] = '#FF6500'
+        recognizedColors['dark red'] = '#990000'
+        recognizedColors['light red'] = '#FF4242'
+        recognizedColors['dark green'] = '#005600'
+        recognizedColors['light green'] = '#19E519'
+        recognizedColors['lime green'] = '#00FF00'
+        recognizedColors['dark blue'] = '#000095'
+        recognizedColors['light blue'] = '#3F7FFF' 
+        recognizedColors['dark yellow'] = '#D1BC34'
+        recognizedColors['gold'] = '#D1BC34'
+        recognizedColors['light yellow'] = '#FFF950'
+        recognizedColors['orange'] = '#FF851B'
+        recognizedColors['cyan'] = '#2DFDFF'
+        recognizedColors['magenta'] = '#FF00FF'
+        recognizedColors['silver'] = '#C0C0C0'
+        recognizedColors['purple'] = '#800080'
+        recognizedColors['fuchsia'] = '#FF00FF'
+        recognizedColors['pink'] = '#FF70B2'
+        recognizedColors['brown'] = '#68422E'	
+        recognizedColors['navy'] = '#000080'
+        recognizedColors['blue'] = '#0074D9'	
+        recognizedColors['teal'] = '#39CCCC'
+        recognizedColors['aqua'] = '#00FFFF'	
+        recognizedColors['green'] = '#008000'
+        recognizedColors['lime'] = '#00FF00'	
+        recognizedColors['olive'] = '#3D9970'
+        recognizedColors['yellow'] = '#FFFF00'
+        recognizedColors['maroon'] = '#85144b'
+        recognizedColors['red'] = '#FF0000'
+        recognizedColors['grey'] = '#AAAAAA'
+        recognizedColors['gray'] = '#AAAAAA'
+        recognizedColors['white'] = '#FFFFFF'
+        recognizedColors['black'] = '#000000'
 
 	for key in recognizedColors:
 		if (key in inString): return recognizedColors[key]
