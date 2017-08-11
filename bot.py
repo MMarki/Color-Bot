@@ -102,7 +102,7 @@ def getColorHarmony(inColor):
 	harmonyChoice = random.randrange(0,12)
 
 	if (harmonyChoice == 0 or harmonyChoice == 1):
-		newrandColorArray = getAnalogousHarmony(inColor,0.2)
+		newrandColorArray = getAnalogousHarmony(inColor,0.12)
 	elif (harmonyChoice == 2):
 		newrandColorArray = getMonochromaticHarmony(inColor,0.1, 0.25)
 	elif (harmonyChoice == 3):
